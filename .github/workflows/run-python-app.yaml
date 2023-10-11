@@ -24,4 +24,4 @@ jobs:
         pip install -r requirements.txt;
     - name: Run Bot
       run: |
-        python kmb_bot.py
+        python kmb_bot.py -t ${{ secrets.KMB_BOT_TOKEN }}
