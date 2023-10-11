@@ -1,5 +1,6 @@
 import logging
 import requests
+import sys, getopt
 
 from telegram import *
 from telegram.ext import *
@@ -102,14 +103,15 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await context.bot.send_message(chat_id=update.effective_chat.id, text="Please share your location", reply_markup = ReplyKeyboardMarkup(keyboard))
 
 
-# async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-#     """Displays info on how to use the bot."""
-#     await update.message.reply_text("Use /start to test this bot.")
-
 def main() -> None:
     """Run the bot."""
+    token = ""
+    opts, args = getopt.getopt(sys.argv[1:], "t:", [])
+    for opt, arg in opts:
+        if opt == "-t":
+            token = arg
     # Create the Application and pass it your bot's token.
-    application = Application.builder().token("6525614246:AAGTHKd_fVXhVu-eyPTLM8USVKrX5lgn8rw").build()
+    application = Application.builder().token(token).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.LOCATION, location_handler))
