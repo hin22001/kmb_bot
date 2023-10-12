@@ -1,6 +1,7 @@
+import sys, getopt
 import logging
 import requests
-import sys, getopt
+from datetime import datetime, timedelta
 
 from telegram import *
 from telegram.ext import *
@@ -16,6 +17,10 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 routes = requests.get("https://data.etabus.gov.hk/v1/transport/kmb/route/").json()["data"]
+route_stop_list = requests.get("https://data.etabus.gov.hk/v1/transport/kmb/route-stop").json()["data"]
+stop_list = requests.get("https://data.etabus.gov.hk/v1/transport/kmb/stop").json()["data"]
+
+
 
 async def start(update, context):
     await context.bot.send_message(chat_id=update.effective_chat.id, text=f"Welcome")
@@ -56,7 +61,10 @@ async def location_handler(update: Update, context: CallbackContext):
     eta_list = requests.get(f"https://data.etabus.gov.hk/v1/transport/kmb/eta/{nearest_stop['stop']}/{route}/{service_type}").json()["data"]
 
     for eta in eta_list:
-        await context.bot.send_message(chat_id=update.effective_chat.id, text=f"預計到達時間:\n{eta['eta']}")
+        eta_timestamp = datetime.strptime(eta['eta'], '%Y-%m-%dT%H:%M:%S%z').timestamp()
+        time_eta = datetime.strftime(datetime.fromtimestamp(eta_timestamp - datetime.now().timestamp()), "%M:%S")
+        
+        await context.bot.send_message(chat_id=update.effective_chat.id, text=f"預計到達時間:\n{time_eta}")
 
 
 async def command_handler(update: Update, context: CallbackContext):
@@ -94,6 +102,12 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await query.answer()
 
     await query.edit_message_text(text=f"{data[0]}➡️{data[1]}")
+
+    route_stop_list = requests.get(f"https://data.etabus.gov.hk/v1/transport/kmb/route-stop/{context.user_data['route']}/{context.user_data['bound']}/{context.user_data['service_type']}").json()["data"]
+
+    context.user_data["route_stop_list"] = route_stop_list
+
+    logger.info(route_stop_list)
 
     keyboard = [
         [
